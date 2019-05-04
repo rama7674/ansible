@@ -1,0 +1,97 @@
+  - name: Install JDK 1.8
+    yum: name=java-1.8.0-openjdk state=present
+  - name: Install Git
+    yum: name=git state=present
+  - name: Check & create downloads dir
+    file:
+      path: '{{ maven_home_parent_directory }}'
+      state: directory
+      mode: 0755
+  - name: Checking if Maven is already installed
+    stat: 
+      path: '{{ maven_home_parent_directory }}/apache-maven-{{ maven_version }}'
+    register: maven_installed
+    tags:
+       - cb
+  - name: Downloading Maven Binaries
+    get_url:
+      url: '{{ maven_download_url }}'
+      dest: '{{ maven_home_parent_directory }}/{{ maven_file_name }}'
+    when: maven_installed.stat.exists != True 
+    tags:
+       - cb 
+  - name: Unarchive Maven Binaries
+    unarchive:
+      src: '{{ maven_home_parent_directory }}/{{ maven_file_name }}'
+      dest: '{{ maven_home_parent_directory }}'
+      copy: no
+    when: maven_installed.stat.exists != True
+    tags:
+       - cb
+    ignore_errors: yes     
+  - name: Remove old path configuration
+    file:
+      path: /etc/profile.d/maven.sh
+      state: absent
+    when: maven_installed.stat.exists != True
+    tags:
+       - cb
+  - name: Maven path configuration
+    lineinfile:
+      dest: /etc/profile.d/maven.sh
+      line: '{{ item.line }}'
+      create: yes
+      state: present
+    with_items:
+      - { line: 'M2_HOME={{maven_home_parent_directory}}/apache-maven-{{maven_version}}' }
+      - { line: 'PATH=$PATH:$M2_HOME/bin' }
+    tags:
+           - cb
+  - name: Cleaning Up
+    file:
+     state: absent
+     path: '{{ maven_home_parent_directory }}/{{ maven_file_name }}' 
+     tags:
+      - cb    
+    ignore_errors: yes     
+  - name: Install docker
+    yum: name=docker state=present
+    tags:
+            - nb
+  - name: download jenkins.repo
+    get_url:
+      url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+      dest: /etc/yum.repos.d/jenkins.repo
+
+  - name: import jenkins key
+    rpm_key:
+      state: present
+      key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+
+  - name: install jenkins
+    yum:
+      name: jenkins
+      state: present
+
+  - name: start jenkins
+    systemd:
+      name: jenkins
+      state: started
+
+  - name: enable jenkins
+    systemd:
+      name: jenkins
+      enabled: true
+
+  - name: sleep for 30 seconds and continue with play
+    wait_for: timeout=30
+    delegate_to: localhost
+
+  - name: init password jenkin
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    changed_when: false
+    register: result
+
+  - name: print init password jenkins
+    debug:
+      var: result.stdout            
