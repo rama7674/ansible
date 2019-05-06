@@ -18,16 +18,19 @@
              - botocore  
    - name: launch s3 bucket
      s3_bucket:
-             name: "rk9676"
+             name: "rk967674"
              state: present
-             aws_access_key: "AKIAI2HIUWD6XVYNHYQA"
-             aws_secret_key: "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"
+             aws_access_key: "AKIAIEDJYCL3YBA44ESA"
+             aws_secret_key: "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"
    - name: upload the file to S3
      s3:
-        bucket: "rk9676"
+        bucket: "rk967674"
         mode: put
         src: /etc/ansible/ec2.yml
         object: /rk9676/ec2.yml 
-        aws_access_key: "AKIAI2HIUWD6XVYNHYQA"
-        aws_secret_key: "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"
-
+        aws_access_key: "AKIAIEDJYCL3YBA44ESA"
+        aws_secret_key: "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"
+   - name: delete our temp file
+     file:
+        path: /rk9676/s3.yml
+        state: absent
