@@ -1,0 +1,33 @@
+---
+ - hosts: node2
+   become: yes
+   connection: local
+   #gather_facts: False
+
+   tasks:
+   - name: install python-pip library
+     apt: name='{{item}}'
+     with_items:
+             - python-pip
+             - python-dev
+   - name: install Python-boto library
+     pip: name='{{item}}'
+     with_items:
+             - boto
+             - boto3
+             - botocore  
+   - name: launch s3 bucket
+     s3_bucket:
+             name: "rk9676"
+             state: present
+             aws_access_key: "AKIAI2HIUWD6XVYNHYQA"
+             aws_secret_key: "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"
+   - name: upload the file to S3
+     s3:
+        bucket: "rk9676"
+        mode: put
+        src: /etc/ansible/ec2.yml
+        object: /rk9676/ec2.yml 
+        aws_access_key: "AKIAI2HIUWD6XVYNHYQA"
+        aws_secret_key: "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"
+
