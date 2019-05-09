@@ -55,7 +55,7 @@
       - cb    
     ignore_errors: yes     
   - name: Install docker
-    yum: name=docker state=present
+    yum: name=docker.io state=present
     tags:
             - nb
   - name: download jenkins.repo
